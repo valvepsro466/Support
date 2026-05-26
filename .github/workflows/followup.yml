@@ -1,0 +1,74 @@
+name: Follow-Up Checker
+
+permissions:
+  issues: write
+
+on:
+  schedule:
+    - cron: "*/2 * * * *"   # runs every 2 minutes (fast testing)
+  workflow_dispatch:        # manual trigger for testing
+
+jobs:
+  followup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            console.log("Follow-up checker running at", new Date().toISOString());
+
+            const delay = 5 * 60 * 1000; // ⏱️ 5 minutes
+            const now = Date.now();
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: "needs-follow-up",
+              state: "open"
+            });
+
+            console.log("Issues with follow-up label:", issues.data.length);
+
+            for (const issue of issues.data) {
+              const created = new Date(issue.created_at).getTime();
+
+              if (now - created < delay) {
+                console.log(`Issue #${issue.number} not ready yet`);
+                continue;
+              }
+
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number
+              });
+
+              if (comments.data.length > 1) {
+                console.log(`Issue #${issue.number} already has replies, skipping`);
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  name: "needs-follow-up"
+                });
+                continue;
+              }
+
+              console.log(`Posting follow-up for issue #${issue.number}`);
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: "⏰Hello, We’re following up to confirm whether your issue has been successfully resolved. Please let us know if creating a chat with our live support team was smooth and seamless. We’d also appreciate any feedback on what worked well or what could be improved. Thank you."
+              });
+
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                name: "needs-follow-up"
+              });
+            }
