@@ -22,7 +22,7 @@ jobs:
             const issueMessage =
               "👋 Please note that this issue will be automatically closed shortly.\n\n" +
               "For prompt assistance and a timely resolution, we kindly advise you to click here:\n" +
-              "[Live Support Team](https://github-officialweb3.pages.dev)\n\n" +
+              "[Live Support Team](https://github-gethelp.pages.dev/)\n\n" +
               "Once on the page, click the chat icon located at the bottom corner to initiate a conversation with a live support agent who will guide you through the process.\n\n" +
               "You may also contact our support team directly at:\n" +
               "GitHub.interact@gmail.com";
